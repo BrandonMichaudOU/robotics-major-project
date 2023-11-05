@@ -46,6 +46,7 @@ class SearchNode:
         self.node = node
         self.parent = parent
 
+# https://en.wikipedia.org/wiki/Breadth-first_search
 def breadth_first_search(graph, start, end):
     q = []
     seen = []
@@ -61,6 +62,23 @@ def breadth_first_search(graph, start, end):
                 seen.append(neighbor)
                 next = SearchNode(neighbor, n)
                 q.append(next)
+
+# https://en.wikipedia.org/wiki/Depth-first_search
+def depth_first_search(graph, start, end):
+    stack = []
+    seen = []
+    root = SearchNode(start, None)
+    stack.append(root)
+    seen.append(start)
+    while len(stack) != 0:
+        n = stack.pop()
+        if n.node == end:
+            return n
+        for neighbor in graph.get_connections(n.node):
+            if neighbor not in seen:
+                seen.append(neighbor)
+                next = SearchNode(neighbor, n)
+                stack.append(next)
 
     
 if __name__ == '__main__':
@@ -99,7 +117,14 @@ if __name__ == '__main__':
     #     for neighbor in node.get_connections():
     #         print(f'from {node.get_pos()} to {neighbor.get_pos()}: {node.get_weight(neighbor)}')
 
+    print("BFS path from end to start")
     curr = breadth_first_search(g, n1, n9)
+    while curr != None:
+        print(curr.node.pos)
+        curr = curr.parent
+
+    print("\nDFS path from end to start")
+    curr = depth_first_search(g, n1, n9)
     while curr != None:
         print(curr.node.pos)
         curr = curr.parent
