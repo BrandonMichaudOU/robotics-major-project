@@ -20,16 +20,11 @@ def djikstra(map, start_node, end_node):
                 min_node = node
             elif distances[node] < distances[min_node]:
                 min_node = node
-
-        print(f'min node: {min_node.pos}')
+                
         # add node's neighbors and update distances
         for neighbor in map.get_connections(min_node):
             temp_dist = distances[min_node] + map.get_weight(min_node, neighbor)
-            print(f'Distances[{min_node.pos}] = {distances[min_node]}; link: {map.get_weight(min_node, neighbor)}')
-            print(f'Temp distance: {temp_dist}')
-            print(f'Old distance: {distances[neighbor]}')
             if temp_dist < distances[neighbor]:
-                print(f'updating node: {neighbor.pos}')
                 distances[neighbor] = temp_dist
                 parents[neighbor] = min_node
 
