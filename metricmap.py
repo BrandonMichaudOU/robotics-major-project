@@ -5,11 +5,6 @@ class MetricMapNode:
         self.pos = pos
         self.weight = weight
 
-class TreeNode:
-    def __init__(self, parentNode):
-        self.parent = parentNode
-        self.children = []
-
 class MetricMap:
     def __init__(self, numRows, numCols, defWeight = 1):
         self.map = {}
@@ -43,12 +38,15 @@ class MetricMap:
         return neighbors
             
     def print_weight_map(self):
-        for x in range(map.numRows):
+        for x in range(self.numRows):
             curRow = []
-            for y in range(map.numCols):
-                curRow.append(map.map[(x, y)])
+            for y in range(self.numCols):
+                curRow.append(self.map[(x, y)])
 
             print([node.weight for node in curRow])
+
+    def get_nodes(self):
+        return list(self.map.values())
 
     def get_heuristic(self, src_node, dest_node):
         return math.dist(src_node.pos, dest_node.pos)
@@ -64,22 +62,3 @@ class MetricMap:
             print("Failed to edit node")
         else:
             dest_node.weight = new_weight
-
-map = MetricMap(10, 10)
-print("Metric Map Weights: ")
-map.print_weight_map()
-print()
-
-point1 = map.get_node((0, 0))
-point2 = map.get_node((3, 4))
-point3 = map.get_node((1, 0))
-
-print(f'P1 {point1.pos} to P2 {point2.pos}')
-print(f'Distance: {map.get_heuristic(point1, point2)}; Weight: {map.get_weight(point1, point2)}')
-print()
-print(f'P1 {point1.pos} to P3 {point3.pos}')
-print(f'Distance: {map.get_heuristic(point1, point3)}; Weight: {map.get_weight(point1, point3)}')
-
-map.edit_weight(point1, point3, 10)
-print(f'P1 {point1.pos} to P3 {point3.pos}')
-print(f'Distance: {map.get_heuristic(point1, point3)}; Weight: {map.get_weight(point1, point3)}')
