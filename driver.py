@@ -1,31 +1,21 @@
 import metricmap
-import djikstra
+import dijkstra
 import graph
 
 if __name__ == "__main__":
+    # Initialize a 10x10 metric map
     map = metricmap.MetricMap(10, 10)
+
+    point1 = map.get_node((0, 0))
+    point2 = map.get_node((0, 2))
+    point3 = map.get_node((0, 1))
+    
+    map.edit_weight(point1, point3, 10)
     print("Metric Map Weights: ")
     map.print_weight_map()
     print()
 
-    point1 = map.get_node((0, 0))
-    point2 = map.get_node((3, 4))
-    point3 = map.get_node((1, 0))
-
-    print(f'P1 {point1.pos} to P2 {point2.pos}')
-    print(f'Distance: {map.get_heuristic(point1, point2)}; Weight: {map.get_weight(point1, point2)}')
-    print()
-    print(f'P1 {point1.pos} to P3 {point3.pos}')
-    print(f'Distance: {map.get_heuristic(point1, point3)}; Weight: {map.get_weight(point1, point3)}')
-
-    map.edit_weight(point1, point3, 10)
-    print(f'P1 {point1.pos} to P3 {point3.pos}')
-    print(f'Distance: {map.get_heuristic(point1, point3)}; Weight: {map.get_weight(point1, point3)}')
-
-    path = [node.pos for node in djikstra.djikstra(map, point1, point2)]
-    path.reverse()
-    print(path)
-
+    # Initialize a topological graph
     g = graph.Graph()
 
     n1 = g.add_node((0, 0))
@@ -56,19 +46,32 @@ if __name__ == "__main__":
     g.add_edge(n8, n9, 9)
     g.add_edge(n8, n10, 7)
     g.add_edge(n9, n10, 1)
+    
+    # Djikstra's method on a metric map
+    path = [node.pos for node in dijkstra.dijkstra(map, point1, point2)]
+    path.reverse()
+    print(f'From {point1.pos} to {point2.pos}: {path}')
 
-    # for node in g.get_nodes():
-    #     for neighbor in node.get_connections():
-    #         print(f'from {node.get_pos()} to {neighbor.get_pos()}: {node.get_weight(neighbor)}')
-
+    # Breadth first search on a topological graph
     print("BFS path from end to start")
     curr = graph.breadth_first_search(g, n1, n9)
     while curr != None:
         print(curr.node.pos)
         curr = curr.parent
 
+    # Depth first search on a topological graph
     print("\nDFS path from end to start")
     curr = graph.depth_first_search(g, n1, n9)
     while curr != None:
         print(curr.node.pos)
         curr = curr.parent
+
+    # Breadth first search on a metric map
+    print(f'BFS path from {point1.pos} to {point2.pos}:')
+    curr = graph.breadth_first_search(map, point1, point2)
+    path = []
+    while curr != None:
+        path.append(curr.node.pos)
+        curr = curr.parent
+    path.reverse()
+    print(path)

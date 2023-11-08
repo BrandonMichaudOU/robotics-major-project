@@ -1,7 +1,7 @@
 import sys
 
 # https://www.programiz.com/dsa/dijkstra-algorithm
-def djikstra(map, start_node, end_node):
+def dijkstra(map, start_node, end_node):
     distances = {}
     parents = {}
     pqueue = []
