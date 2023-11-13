@@ -1,3 +1,5 @@
+import numpy as np
+
 class Node:
     def __init__(self, pos):
         self.pos = pos
@@ -80,6 +82,53 @@ def depth_first_search(graph, start, end):
                 next = SearchNode(neighbor, n)
                 stack.append(next)
 
+def dijkstra(graph, start, end):
+    print('test')
+
+def euclidean_distance(start, end):
+    return ((end[0] - start[0])**2 + (end[1] - start[1])**2)**0.5
+
+def reconstruct_path(parent, node):
+    path = [node]
+    while node in parent:
+        node = parent[node]
+        path.insert(0, node)
+    return path
+
+def a_star(graph, start, end):
+    open = [start]
+    parent = {}
+    cost_to_node = {}
+    total_cost_estimate = {}
+
+    cost_to_node[start] = 0
+    total_cost_estimate[start] = euclidean_distance(start.get_pos(), end.get_pos())
+
+    while len(open) != 0:
+        min_node = None
+        min_cost = np.inf
+        for open_node in open:
+            if total_cost_estimate[open_node] < min_cost:
+                min_cost = total_cost_estimate[open_node]
+                min_node = open_node
+        
+        if min_node == end:
+            return reconstruct_path(parent, min_node)
+        
+        open.remove(min_node)
+        for neighbor in graph.get_connections(min_node):
+            temp_cost = cost_to_node[min_node] + min_node.get_weight(neighbor)
+            if neighbor not in cost_to_node or temp_cost < cost_to_node[neighbor]:
+                parent[neighbor] = min_node
+                cost_to_node[neighbor] = temp_cost
+                total_cost_estimate[neighbor] = temp_cost + euclidean_distance(neighbor.get_pos(), end.get_pos())
+                if neighbor not in open:
+                    open.append(neighbor)
+
+    return []
+
+def d_star(graph, start, end):
+    print('test')
     
 if __name__ == '__main__':
     g = Graph()
@@ -117,14 +166,17 @@ if __name__ == '__main__':
     #     for neighbor in node.get_connections():
     #         print(f'from {node.get_pos()} to {neighbor.get_pos()}: {node.get_weight(neighbor)}')
 
-    print("BFS path from end to start")
-    curr = breadth_first_search(g, n1, n9)
-    while curr != None:
-        print(curr.node.pos)
-        curr = curr.parent
+    # print("BFS path from end to start")
+    # curr = breadth_first_search(g, n1, n9)
+    # while curr != None:
+    #     print(curr.node.pos)
+    #     curr = curr.parent
 
-    print("\nDFS path from end to start")
-    curr = depth_first_search(g, n1, n9)
-    while curr != None:
-        print(curr.node.pos)
-        curr = curr.parent
+    # print("\nDFS path from end to start")
+    # curr = depth_first_search(g, n1, n9)
+    # while curr != None:
+    #     print(curr.node.pos)
+    #     curr = curr.parent
+
+    for node in a_star(g, n1, n9):
+        print(node.get_pos())
