@@ -9,8 +9,10 @@ if __name__ == "__main__":
     point1 = map.get_node((0, 0))
     point2 = map.get_node((0, 2))
     point3 = map.get_node((0, 1))
+    point4 = map.get_node((1, 1))
     
-    map.edit_weight(point1, point3, 10)
+    point3.weight = -1 # Make an obstacle at (0,1)
+    point4.weight = 10 # Make difficult terrain at (1,1)
     print("Metric Map Weights: ")
     map.print_weight_map()
     print()
@@ -47,27 +49,28 @@ if __name__ == "__main__":
     g.add_edge(n8, n10, 7)
     g.add_edge(n9, n10, 1)
     
-    # Djikstra's method on a metric map
+    # Dijkstra's method on a metric map
     path = [node.pos for node in dijkstra.dijkstra(map, point1, point2)]
     path.reverse()
-    print(f'From {point1.pos} to {point2.pos}: {path}')
+    print(f'Metric: Dijkstra From {point1.pos} to {point2.pos}:')
+    print(path)
 
     # Breadth first search on a topological graph
-    print("BFS path from end to start")
+    print("Topological: BFS path from end to start")
     curr = graph.breadth_first_search(g, n1, n9)
     while curr != None:
         print(curr.node.pos)
         curr = curr.parent
 
     # Depth first search on a topological graph
-    print("\nDFS path from end to start")
+    print("Topological: DFS path from end to start")
     curr = graph.depth_first_search(g, n1, n9)
     while curr != None:
         print(curr.node.pos)
         curr = curr.parent
 
     # Breadth first search on a metric map
-    print(f'BFS path from {point1.pos} to {point2.pos}:')
+    print(f'Metric: BFS path from {point1.pos} to {point2.pos}:')
     curr = graph.breadth_first_search(map, point1, point2)
     path = []
     while curr != None:

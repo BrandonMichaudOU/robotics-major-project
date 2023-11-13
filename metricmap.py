@@ -35,7 +35,7 @@ class MetricMap:
         if (col+1 < self.numCols):
             neighbors.append(self.map[(row, col+1)])
 
-        return neighbors
+        return [neighbor for neighbor in neighbors if neighbor.weight != -1]
             
     def print_weight_map(self):
         for x in range(self.numRows):
@@ -59,6 +59,7 @@ class MetricMap:
 
     def edit_weight(self, src_node, dest_node, new_weight):
         if not dest_node in self.get_connections(src_node):
-            print("Failed to edit node")
+            print("Failed to edit connection")
         else:
             dest_node.weight = new_weight
+

@@ -40,6 +40,12 @@ class Graph:
 
     def get_nodes(self):
         return self.nodes
+
+    def edit_weight(self, src_node, dest_node, new_weight):
+        if not dest_node in self.get_connections(src_node):
+            print("Failed to edit connection")
+        else:
+            src_node.adjacent[dest_node] = new_weight
     
 class SearchNode:
     def __init__(self, node, parent):
