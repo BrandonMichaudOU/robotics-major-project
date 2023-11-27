@@ -64,12 +64,20 @@ def breadth_first_search(graph, start, end):
     while len(q) != 0:
         n = q.pop(0)
         if n.node == end:
-            return n
+            break
         for neighbor in graph.get_connections(n.node):
             if neighbor not in seen:
                 seen.append(neighbor)
                 next = SearchNode(neighbor, n)
                 q.append(next)
+
+    # Create a path from start to end
+    path = []
+    while n != None:
+        path.insert(0,n.node)
+        n = n.parent
+
+    return path
 
 # https://en.wikipedia.org/wiki/Depth-first_search
 def depth_first_search(graph, start, end):
@@ -81,12 +89,20 @@ def depth_first_search(graph, start, end):
     while len(stack) != 0:
         n = stack.pop()
         if n.node == end:
-            return n
+            break
         for neighbor in graph.get_connections(n.node):
             if neighbor not in seen:
                 seen.append(neighbor)
                 next = SearchNode(neighbor, n)
                 stack.append(next)
+
+    # Create a path from start to end
+    path = []
+    while n != None:
+        path.insert(0,n.node)
+        n = n.parent
+
+    return path
 
 def dijkstra(graph, start, end):
     print('test')

@@ -31,10 +31,10 @@ def dijkstra(map, start_node, end_node):
         # remove node from priority list
         pqueue.remove(min_node)
 
-    # Make list of nodes from end_node to start
+    # Make list of nodes from start to end
     cur_node = end_node
     shortest_path = [cur_node]
     while cur_node != start_node or parents[cur_node] != None:
-        shortest_path.append(parents[cur_node])
+        shortest_path.insert(0,parents[cur_node])
         cur_node = parents[cur_node]
     return shortest_path
