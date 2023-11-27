@@ -1,7 +1,8 @@
 import numpy as np
 
 class Node:
-    def __init__(self, pos):
+    def __init__(self, name, pos):
+        self.name = name
         self.pos = pos
         self.adjacent = {} # dictionary from node to weight
 
@@ -21,10 +22,12 @@ class Graph:
     def __init__(self):
         self.nodes = [] # List of nodes in graph
         self.num_nodes = 0
+        self.curr_name = 'A'
 
     def add_node(self, pos):
         self.num_nodes = self.num_nodes + 1
-        new_node = Node(pos)
+        new_node = Node(pos, pos)
+#        self.curr_name = chr(ord(self.curr_name) + 1)
         self.nodes.append(new_node)
         return new_node
 
@@ -56,6 +59,7 @@ class SearchNode:
 
 # https://en.wikipedia.org/wiki/Breadth-first_search
 def breadth_first_search(graph, start, end):
+    nodes_seen = []
     q = []
     seen = []
     root = SearchNode(start, None)
@@ -67,6 +71,7 @@ def breadth_first_search(graph, start, end):
             break
         for neighbor in graph.get_connections(n.node):
             if neighbor not in seen:
+                nodes_seen.append(neighbor) # add to nodes seen
                 seen.append(neighbor)
                 next = SearchNode(neighbor, n)
                 q.append(next)
@@ -77,10 +82,11 @@ def breadth_first_search(graph, start, end):
         path.insert(0,n.node)
         n = n.parent
 
-    return path
+    return path, nodes_seen
 
 # https://en.wikipedia.org/wiki/Depth-first_search
 def depth_first_search(graph, start, end):
+    nodes_seen = []
     stack = []
     seen = []
     root = SearchNode(start, None)
@@ -92,6 +98,7 @@ def depth_first_search(graph, start, end):
             break
         for neighbor in graph.get_connections(n.node):
             if neighbor not in seen:
+                nodes_seen.append(neighbor) # add to nodes seen
                 seen.append(neighbor)
                 next = SearchNode(neighbor, n)
                 stack.append(next)
@@ -102,7 +109,7 @@ def depth_first_search(graph, start, end):
         path.insert(0,n.node)
         n = n.parent
 
-    return path
+    return path, nodes_seen
 
 def dijkstra(graph, start, end):
     print('test')

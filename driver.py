@@ -50,27 +50,37 @@ if __name__ == "__main__":
     g.add_edge(n9, n10, 1)
     
     # Dijkstra's method on a metric map
-    path = [node.pos for node in dijkstra.dijkstra(map, point1, point2)]
-    print(f'Metric: Dijkstra From {point1.pos} to {point2.pos}:')
-    print(path)
+    path, seen = dijkstra.dijkstra(map, point1, point2)
+    print(f'Metric: Dijkstra From {point1.name} to {point2.name}:')
+    print(f'\t# of Nodes seen: {len(seen)}')
+    print([node.name for node in path])
+    print()
 
     # Breadth first search on a topological graph
-    path = [node.pos for node in graph.breadth_first_search(g, n1, n9)]
+    path, seen = graph.breadth_first_search(g, n1, n9)
     print("Topological: BFS path from end to start")
-    print(path)
+    print(f'\t# of Nodes seen: {len(seen)}')
+    print([node.name for node in path])
+    print()
 
     # Depth first search on a topological graph
-    path = [node.pos for node in graph.depth_first_search(g, n1, n9)]
+    path, seen = graph.depth_first_search(g, n1, n9)
     print("Topological: DFS path from end to start")
-    print(path)
+    print(f'\t# of Nodes seen: {len(seen)}')
+    print([node.name for node in path])
+    print()
 
     # Breadth first search on a metric map
-    path = [node.pos for node in graph.breadth_first_search(map, point1, point2)]
-    print(f'Metric: BFS path from {point1.pos} to {point2.pos}:')
-    print(path)
+    path, seen = graph.breadth_first_search(map, point1, point2)
+    print(f'Metric: BFS path from {point1.name} to {point2.name}:')
+    print(f'\t# of Nodes seen: {len(seen)}')
+    print([node.name for node in path])
+    print()
 
     # Depth first search on a metric map
-    path = [node.pos for node in graph.depth_first_search(map, point1, point2)]
-    print(f'Metric: DFS path from {point1.pos} to {point2.pos}:')
-    print(path)
+    path, seen = graph.depth_first_search(map, point1, point2)
+    print(f'Metric: DFS path from {point1.name} to {point2.name}:')
+    print(f'\t# of Nodes seen: {len(seen)}')
+    print([node.name for node in path])
+    print()
     

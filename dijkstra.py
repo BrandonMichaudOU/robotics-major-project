@@ -2,6 +2,7 @@ import sys
 
 # https://www.programiz.com/dsa/dijkstra-algorithm
 def dijkstra(map, start_node, end_node):
+    nodes_seen = []
     distances = {}
     parents = {}
     pqueue = []
@@ -29,6 +30,7 @@ def dijkstra(map, start_node, end_node):
                 parents[neighbor] = min_node
 
         # remove node from priority list
+        nodes_seen.append(min_node) # add to nodes seen
         pqueue.remove(min_node)
 
     # Make list of nodes from start to end
@@ -37,4 +39,4 @@ def dijkstra(map, start_node, end_node):
     while cur_node != start_node or parents[cur_node] != None:
         shortest_path.insert(0,parents[cur_node])
         cur_node = parents[cur_node]
-    return shortest_path
+    return shortest_path, nodes_seen

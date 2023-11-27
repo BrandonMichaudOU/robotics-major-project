@@ -2,6 +2,7 @@ import math
 
 class MetricMapNode:
     def __init__(self, pos, weight):
+        self.name = pos
         self.pos = pos
         self.weight = weight
 
