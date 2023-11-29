@@ -22,17 +22,21 @@ class Robot:
         # create blocked list (or replace weights in map)
         # TODO: add num_dynamic-many nodes with increased weights
 
+        # Travel through the path
         while current_node != self.destination_node:
             next_node = self.current_path[0]
+
+            # If next node is blocked, recalculate the path and retry
             if next_node in self.blocked_list:
                 self.current_path, seen = algorithm(self.map, self.current_node, self.destination_node)
                 for node in seen:
                     if node not in nodes_seen:
                         nodes_seen.append(node)
                 continue
-            cost_travelled += 
+
+            # Travel through the node
+            cost_travelled += self.map.get_weight(current_node, next_node)
             current_node = self.current_path.pop(0)
 
-        # loop to go through path
-            # check if next node is a blocked node
-                # if yes, recalculate route
+            # Stretch goal: moving blocked nodes
+            # TODO
