@@ -125,6 +125,7 @@ def reconstruct_path(parent, node):
     return path
 
 def a_star(graph, start, end):
+    nodes_seen = []
     open = [start]
     parent = {}
     cost_to_node = {}
@@ -142,11 +143,14 @@ def a_star(graph, start, end):
                 min_node = open_node
         
         if min_node == end:
-            return reconstruct_path(parent, min_node)
+            return reconstruct_path(parent, min_node), nodes_seen
         
+        if min_node not in nodes_seen:
+            nodes_seen.append(min_node)
+
         open.remove(min_node)
         for neighbor in graph.get_connections(min_node):
-            temp_cost = cost_to_node[min_node] + min_node.get_weight(neighbor)
+            temp_cost = cost_to_node[min_node] + graph.get_weight(min_node, neighbor)
             if neighbor not in cost_to_node or temp_cost < cost_to_node[neighbor]:
                 parent[neighbor] = min_node
                 cost_to_node[neighbor] = temp_cost
@@ -154,7 +158,7 @@ def a_star(graph, start, end):
                 if neighbor not in open:
                     open.append(neighbor)
 
-    return []
+    return [], []
 
 def d_star(graph, start, end):
     print('test')
