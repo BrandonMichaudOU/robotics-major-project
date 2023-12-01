@@ -59,7 +59,7 @@ class Graph:
         self.num_nodes = 0
 
     def random_topological_map(self, num_nodes, num_edges, max_weight, x_pos_max, y_pos_max):
-        if num_edges < num_nodes - 1:
+        if num_edges < num_nodes - 1 or num_edges > num_nodes * (num_nodes - 1) / 2:
             return None
         self.clear()
         previous = None
@@ -131,8 +131,34 @@ def depth_first_search(graph, start, end):
     return []
 
 
+# https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm#
 def dijkstra(graph, start, end):
-    print('test')
+    distances = {}
+    parent = {}
+    pqueue = []
+
+    for node in graph.get_nodes():
+        distances[node] = np.inf
+        pqueue.append(node)
+    distances[start] = 0
+
+    while pqueue:
+        min_node = None
+        for node in pqueue:
+            if min_node is None:
+                min_node = node
+            elif distances[node] < distances[min_node]:
+                min_node = node
+
+        for neighbor in graph.get_connections(min_node):
+            temp_dist = distances[min_node] + min_node.get_weight(neighbor)
+            if temp_dist < distances[neighbor]:
+                distances[neighbor] = temp_dist
+                parent[neighbor] = min_node
+
+        pqueue.remove(min_node)
+
+    return reconstruct_path(parent, end)
 
 
 def euclidean_distance(start, end):
@@ -177,7 +203,7 @@ def d_star(graph, start, end):
     new = []
 
     c = graph.get_all_connections()
-    b = {}  # backpointers to next node
+    b = {}  # back pointers to next node
     k = {end: 0}  # cost from node to goal
     h = {}  # heuristic estimate of cost from node to goal
     for n in graph.get_nodes():
@@ -291,52 +317,40 @@ def d_star(graph, start, end):
 
 if __name__ == '__main__':
     g = Graph()
-    g.random_topological_map(10, 17, 5, 10, 10)
+    # g.random_topological_map(10, 17, 5, 10, 10)
 
-    # n1 = g.add_node((0, 0))
-    # n2 = g.add_node((5, 2))
-    # n3 = g.add_node((5, -2))
-    # n4 = g.add_node((8, 0))
-    # n5 = g.add_node((10, 1))
-    # n6 = g.add_node((12, 2))
-    # n7 = g.add_node((12, 0))
-    # n8 = g.add_node((15, 0))
-    # n9 = g.add_node((20, 0))
-    # n10 = g.add_node((20, -2))
-    #
-    # g.add_edge(n1, n2, 2)
-    # g.add_edge(n1, n3, 5)
-    # g.add_edge(n2, n3, 1)
-    # g.add_edge(n2, n4, 3)
-    # g.add_edge(n2, n5, 1)
-    # g.add_edge(n3, n4, 2)
-    # g.add_edge(n3, n7, 6)
-    # g.add_edge(n3, n10, 30)
-    # g.add_edge(n4, n5, 1)
-    # g.add_edge(n4, n7, 8)
-    # g.add_edge(n5, n6, 7)
-    # g.add_edge(n6, n7, 1)
-    # g.add_edge(n6, n8, 6)
-    # g.add_edge(n7, n8, 4)
-    # g.add_edge(n8, n9, 9)
-    # g.add_edge(n8, n10, 7)
-    # g.add_edge(n9, n10, 1)
+    n1 = g.add_node((0, 0))
+    n2 = g.add_node((5, 2))
+    n3 = g.add_node((5, -2))
+    n4 = g.add_node((8, 0))
+    n5 = g.add_node((10, 1))
+    n6 = g.add_node((12, 2))
+    n7 = g.add_node((12, 0))
+    n8 = g.add_node((15, 0))
+    n9 = g.add_node((20, 0))
+    n10 = g.add_node((20, -2))
+
+    g.add_edge(n1, n2, 2)
+    g.add_edge(n1, n3, 5)
+    g.add_edge(n2, n3, 1)
+    g.add_edge(n2, n4, 3)
+    g.add_edge(n2, n5, 1)
+    g.add_edge(n3, n4, 2)
+    g.add_edge(n3, n7, 6)
+    g.add_edge(n3, n10, 30)
+    g.add_edge(n4, n5, 1)
+    g.add_edge(n4, n7, 8)
+    g.add_edge(n5, n6, 7)
+    g.add_edge(n6, n7, 1)
+    g.add_edge(n6, n8, 6)
+    g.add_edge(n7, n8, 4)
+    g.add_edge(n8, n9, 9)
+    g.add_edge(n8, n10, 7)
+    g.add_edge(n9, n10, 1)
 
     # for node in g.get_nodes():
     #     for neighbor in node.get_connections():
     #         print(f'from {node.get_pos()} to {neighbor.get_pos()}: {node.get_weight(neighbor)}')
-
-    # print("BFS path from end to start")
-    # curr = breadth_first_search(g, n1, n9)
-    # while curr != None:
-    #     print(curr.node.pos)
-    #     curr = curr.parent
-
-    # print("\nDFS path from end to start")
-    # curr = depth_first_search(g, n1, n9)
-    # while curr != None:
-    #     print(curr.node.pos)
-    #     curr = curr.parent
 
     # print('A*')
     # for node in a_star(g, n1, n9):
@@ -345,5 +359,5 @@ if __name__ == '__main__':
     # print('D*')
     # for node in d_star(g, n1, n9):
     #     print(node.get_pos())
-    # for node in breadth_first_search(g, n1, n9):
+    # for node in dijkstra(g, n1, n9):
     #     print(node.get_pos())
