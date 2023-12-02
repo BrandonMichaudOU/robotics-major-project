@@ -187,6 +187,7 @@ class Graph:
                 self.add_edge(node1, node2, weight)  # update weight of edge
 
 
+# given the end node and the parents, reconstructs path from start to end
 def reconstruct_path(parent, node):
     path = [node]
     while node in parent:
@@ -197,68 +198,83 @@ def reconstruct_path(parent, node):
 
 # https://en.wikipedia.org/wiki/Breadth-first_search
 def breadth_first_search(graph, start, end):
-    q = []
-    seen = []
-    parent = {}
-    q.append(start)
-    seen.append(start)
+    q = [start]  # queue of nodes
+    seen = [start]  # list of nodes seen
+    parent = {}  # dictionary from node to parent node
 
-    # Statistics
+    # statistics
     iterations = 0
 
-    while len(q) != 0:
-        n = q.pop(0)
+    # add unseen nodes until goal is found or queue is empty
+    while q:
         iterations += 1
+
+        n = q.pop(0)  # get node at front of queue
+
+        # if the node is the goal, return path and iterations
         if n == end:
-            return reconstruct_path(parent, n), seen, iterations
+            return reconstruct_path(parent, n), iterations
+
+        # add all unseen neighbors of node to back of queue
         for neighbor in graph.get_connections(n):
             if neighbor not in seen:
                 seen.append(neighbor)
                 parent[neighbor] = n
                 q.append(neighbor)
-    return [], seen, iterations
+
+    return [], iterations  # return empty path and iterations if path not found
 
 
 # https://en.wikipedia.org/wiki/Depth-first_search
 def depth_first_search(graph, start, end):
-    stack = []
-    seen = []
-    parent = {}
-    stack.append(start)
-    seen.append(start)
+    stack = [start]  # stack of nodes
+    seen = [start]  # list of nodes seen
+    parent = {}  # dictionary from node to parent node
 
-    # Statistics
+    # statistics
     iterations = 0
 
-    while len(stack) != 0:
-        n = stack.pop()
+    # add unseen nodes until goal is found or stack is empty
+    while stack:
         iterations += 1
+
+        n = stack.pop()  # get node from top of stack
+
+        # if the node is the goal, return path and iterations
         if n == end:
-            return reconstruct_path(parent, n), seen, iterations
+            return reconstruct_path(parent, n), iterations
+
+        # add all unseen neighbors of node to top of stack
         for neighbor in graph.get_connections(n):
             if neighbor not in seen:
                 seen.append(neighbor)
                 parent[neighbor] = n
                 stack.append(neighbor)
-    return [], seen, iterations
+
+    return [], iterations  # return empty path and iterations if path not found
 
 
+# https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 def dijkstra(graph, start, end):
-    distances = {}
-    parent = {}
-    pqueue = []
+    distances = {}  # dictionary from node to distance
+    parent = {}  # dictionary from node to parent node
+    pqueue = []  # priority queue of nodes using distance as key
 
+    # add all nodes to priority queue and indicate they cannot be reach
     for node in graph.get_nodes():
         distances[node] = np.inf
         pqueue.append(node)
-    distances[start] = 0
 
-    # Statistics
+    distances[start] = 0  # set distance to start to be 0
+
+    # statistics
     iterations = 0
-    seen = []
 
+    # update distances until priority queue is empty or goal reached
     while pqueue:
         iterations += 1
+
+        # find the node in the priority queue with minimum distance
         min_node = None
         for node in pqueue:
             if min_node is None:
@@ -266,39 +282,45 @@ def dijkstra(graph, start, end):
             elif distances[node] < distances[min_node]:
                 min_node = node
 
+        # if the minimum distance node is the goal, return path and iterations
         if min_node == end:
-            return reconstruct_path(parent, end), seen, iterations
+            return reconstruct_path(parent, end), iterations
 
+        # find total distances to neighbor of minimum distance node and update them if shorter
         for neighbor in graph.get_connections(min_node):
             temp_dist = distances[min_node] + graph.get_weight(min_node, neighbor)
             if temp_dist < distances[neighbor]:
                 distances[neighbor] = temp_dist
                 parent[neighbor] = min_node
 
-        seen.append(min_node)
-        pqueue.remove(min_node)
+        pqueue.remove(min_node)  # remove minimum distance node from priority queue
 
-    return [], seen, iterations
+    return [], iterations  # return empty path and iterations if path not found
 
 
+# finds straight line distance between two points
 def euclidean_distance(start, end):
     return ((end[0] - start[0])**2 + (end[1] - start[1])**2)**0.5
 
 
+# https://en.wikipedia.org/wiki/A*_search_algorithm
+# uses Euclidean distance as heuristic
 def a_star(graph, start, end):
-    open = [start]
-    parent = {}
-    cost_to_node = {}
+    open = [start]  # priority queue of open nodes with total cost estimate as key
+    parent = {}  # dictionary from node to parent node
+    cost_to_node = {start: 0}  # dictionary from node to cost from start to node
+
+    # dictionary from node to total cost estimate
     total_cost_estimate = {start: euclidean_distance(start.get_pos(), end.get_pos())}
 
-    cost_to_node[start] = 0
-
-    # Statistics
-    seen = []
+    # statistics
     iterations = 0
 
-    while len(open) != 0:
+    # update distances until priority queue is empty or goal reached
+    while open:
         iterations += 1
+
+        # find the node in the priority queue with minimum total cost estimate
         min_node = None
         min_cost = np.inf
         for open_node in open:
@@ -306,12 +328,13 @@ def a_star(graph, start, end):
                 min_cost = total_cost_estimate[open_node]
                 min_node = open_node
 
-        seen.append(min_node)
-
+        # if the minimum total cost estimate node is the goal, return path and iterations
         if min_node == end:
-            return reconstruct_path(parent, min_node), seen, iterations
+            return reconstruct_path(parent, min_node), iterations
 
-        open.remove(min_node)
+        open.remove(min_node)  # remove minimum total cost estimate node from priority queue
+
+        # find total distances to neighbor of minimum total cost estimate node and update them if shorter
         for neighbor in graph.get_connections(min_node):
             temp_cost = cost_to_node[min_node] + min_node.get_weight(neighbor)
             if neighbor not in cost_to_node or temp_cost < cost_to_node[neighbor]:
@@ -321,24 +344,28 @@ def a_star(graph, start, end):
                 if neighbor not in open:
                     open.append(neighbor)
 
-    return [], seen, iterations
+    return [], iterations  # return empty path and iterations if path not found
 
 
+# https://www.ri.cmu.edu/pub_files/pub3/stentz_anthony__tony__1994_2/stentz_anthony__tony__1994_2.pdf
 def d_star(graph, start, end):
-    open = []
-    closed = []
-    new = []
+    open = []  # list of open nodes
+    closed = []  # list of closed nodes
+    new = []  # list of new nodes
 
-    c = graph.get_all_connections()
+    c = graph.get_all_connections()  # original edges in graph
     b = {}  # back pointers to next node
-    k = {end: 0}  # cost from node to goal
+    k = {end: 0}  # lowest cost estimate from node to goal
     h = {}  # heuristic estimate of cost from node to goal
+
+    # update heuristic estimate for each node and indicate it has no parent
     for n in graph.get_nodes():
         b[n] = None
         h[n] = euclidean_distance(n.get_pos(), end.get_pos())
 
+    # find the node with minimum cost estimate from open list and return node with cost
     def min_state_val():
-        if len(open) == 0:
+        if not open:
             return None, -1
         min_node = None
         min_cost = np.inf
@@ -348,39 +375,50 @@ def d_star(graph, start, end):
                 min_node = open_node
         return min_node, min_cost
 
+    # find the node with minimum cost estimate from open list and return node
     def min_state():
         state, _ = min_state_val()
         return state
 
+    # find the node with minimum cost estimate from open list and return cost
     def min_val():
         _, value = min_state_val()
         return value
 
+    # removes node from open list and adds it to closed
     def delete(x):
         open.remove(x)
         closed.append(x)
 
+    # insert node into open list with new estimated cost
     def insert(x, h_new):
-        if x in new:
-            k[x] = h_new
+        if x in new:  # if node is in new list
+            k[x] = h_new  # update lowest cost estimate
+
+            # move node from new list to open list
             new.remove(x)
             open.append(x)
-        elif x in open:
-            k[x] = min(k[x], h_new)
-        else:
-            k[x] = min(h[x], h_new)
+        elif x in open:  # if node is in open
+            k[x] = min(k[x], h_new)  # update lowest cost estimate
+        else:  # if node is in closed
+            k[x] = min(h[x], h_new)  # update lowest cost estimate
+
+            # move node from closed list to open list
             closed.remove(x)
             open.append(x)
-        h[x] = h_new
 
+        h[x] = h_new  # update estimate cost of node
+
+    # proces minimum cost estimate node from open list
     def process_state():
-        x = min_state()
+        x = min_state()  # get minimum cost estimate node from open list
 
+        # if there is no minimum cost estimate node from open list indicate so
         if x is None:
             return -1
 
-        k_old = k[x]
-        delete(x)
+        k_old = k[x]  # store minium cost estimate of minimum cost estimate node
+        delete(x)  # move minimum cost estimate node from open list to closed list
 
         if k_old < h[x]:
             for y in graph.get_connections(x):
@@ -406,40 +444,57 @@ def d_star(graph, start, end):
                             insert(y, h[y])
         return min_val()
 
+    # update cost between two nodes and propagate changes
     def modify_cost(x, y, cval):
         c[(x, y)] = cval
         if x in closed:
             insert(x, h[x])
         return min_val()
 
+    # tests if a < b
     def less(a, b):
         if a < b:
             return True
         return False
 
+    # simulates the path traversal
     def move_robot():
+        # add all nodes to new list
         for n in graph.get_nodes():
             new.append(n)
-        insert(end, 0)
-        val = 0
+
+        insert(end, 0)  # move end node to open list
+        val = 0  # keep track of process state return values
+
+        # while path is not found and can be found, process the state
         while start not in closed and val != -1:
             val = process_state()
+
+        # if no path was found, return empty path
         if start in new:
-            return None
-        r = start
-        path = [r]
-        s = c
+            return []
+
+        r = start  # current node in simulation
+        path = [r]  # path found
+        s = c  # updated edges after environment changed
+
+        # construct path from start to goal
         while r != end:
+            # if the weight of an edge has changed, update original edges
             for connection in c.keys():
                 if s[connection] != c[connection]:
                     val = modify_cost(connection[0], connection[1], s[connection])
+
+            # propagate changes of updated edge
             while less(val, h[r]) and val != -1:
                 val = process_state()
-            r = b[r]
-            path.append(r)
-        return path
 
-    return move_robot()
+            r = b[r]  # move to next node
+            path.append(r)  # add node to path
+
+        return path  # return path from start to goal
+
+    return move_robot()  # return path from start to goal
 
 
 if __name__ == '__main__':
