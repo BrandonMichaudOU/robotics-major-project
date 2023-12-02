@@ -226,9 +226,9 @@ def breadth_first_search(graph, start, end):
     while q:
         n = q.pop(0)  # get node at front of queue
 
-        # if the node is the goal, return path and iterations
+        # if the node is the goal, return path
         if n == end:
-            return reconstruct_path(parent, n), iterations
+            return reconstruct_path(parent, n)
 
         # add all unseen neighbors of node to back of queue
         for neighbor in graph.get_connections(n):
@@ -237,7 +237,7 @@ def breadth_first_search(graph, start, end):
                 parent[neighbor] = n
                 q.append(neighbor)
 
-    return []  # return empty path and iterations if path not found
+    return []  # return empty path if path not found
 
 
 # https://en.wikipedia.org/wiki/Depth-first_search
