@@ -222,13 +222,8 @@ def breadth_first_search(graph, start, end):
     seen = [start]  # list of nodes seen
     parent = {}  # dictionary from node to parent node
 
-    # statistics
-    iterations = 0
-
     # add unseen nodes until goal is found or queue is empty
     while q:
-        iterations += 1
-
         n = q.pop(0)  # get node at front of queue
 
         # if the node is the goal, return path and iterations
@@ -242,7 +237,7 @@ def breadth_first_search(graph, start, end):
                 parent[neighbor] = n
                 q.append(neighbor)
 
-    return [], iterations  # return empty path and iterations if path not found
+    return []  # return empty path and iterations if path not found
 
 
 # https://en.wikipedia.org/wiki/Depth-first_search
@@ -251,18 +246,13 @@ def depth_first_search(graph, start, end):
     seen = [start]  # list of nodes seen
     parent = {}  # dictionary from node to parent node
 
-    # statistics
-    iterations = 0
-
     # add unseen nodes until goal is found or stack is empty
     while stack:
-        iterations += 1
-
         n = stack.pop()  # get node from top of stack
 
-        # if the node is the goal, return path and iterations
+        # if the node is the goal, return path
         if n == end:
-            return reconstruct_path(parent, n), iterations
+            return reconstruct_path(parent, n)
 
         # add all unseen neighbors of node to top of stack
         for neighbor in graph.get_connections(n):
@@ -271,7 +261,7 @@ def depth_first_search(graph, start, end):
                 parent[neighbor] = n
                 stack.append(neighbor)
 
-    return [], iterations  # return empty path and iterations if path not found
+    return []  # return empty path if path not found
 
 
 # https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
@@ -287,13 +277,8 @@ def dijkstra(graph, start, end):
 
     distances[start] = 0  # set distance to start to be 0
 
-    # statistics
-    iterations = 0
-
     # update distances until priority queue is empty or goal reached
     while pqueue:
-        iterations += 1
-
         # find the node in the priority queue with minimum distance
         min_node = None
         for node in pqueue:
@@ -302,9 +287,9 @@ def dijkstra(graph, start, end):
             elif distances[node] < distances[min_node]:
                 min_node = node
 
-        # if the minimum distance node is the goal, return path and iterations
+        # if the minimum distance node is the goal, return path
         if min_node == end:
-            return reconstruct_path(parent, end), iterations
+            return reconstruct_path(parent, end)
 
         # find total distances to neighbor of minimum distance node and update them if shorter
         for neighbor in graph.get_connections(min_node):
@@ -315,7 +300,7 @@ def dijkstra(graph, start, end):
 
         pqueue.remove(min_node)  # remove minimum distance node from priority queue
 
-    return [], iterations  # return empty path and iterations if path not found
+    return []  # return empty path if path not found
 
 
 # finds straight line distance between two points
@@ -333,13 +318,8 @@ def a_star(graph, start, end):
     # dictionary from node to total cost estimate
     total_cost_estimate = {start: euclidean_distance(start.get_pos(), end.get_pos())}
 
-    # statistics
-    iterations = 0
-
     # update distances until priority queue is empty or goal reached
     while open:
-        iterations += 1
-
         # find the node in the priority queue with minimum total cost estimate
         min_node = None
         min_cost = np.inf
@@ -348,9 +328,9 @@ def a_star(graph, start, end):
                 min_cost = total_cost_estimate[open_node]
                 min_node = open_node
 
-        # if the minimum total cost estimate node is the goal, return path and iterations
+        # if the minimum total cost estimate node is the goal, return path
         if min_node == end:
-            return reconstruct_path(parent, min_node), iterations
+            return reconstruct_path(parent, min_node)
 
         open.remove(min_node)  # remove minimum total cost estimate node from priority queue
 
@@ -364,7 +344,7 @@ def a_star(graph, start, end):
                 if neighbor not in open:
                     open.append(neighbor)
 
-    return [], iterations  # return empty path and iterations if path not found
+    return []  # return empty path if not found
 
 
 # https://www.ri.cmu.edu/pub_files/pub3/stentz_anthony__tony__1994_2/stentz_anthony__tony__1994_2.pdf
