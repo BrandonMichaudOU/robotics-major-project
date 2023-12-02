@@ -26,6 +26,8 @@ class Graph:
         self.nodes = []  # list of nodes in graph
         self.num_nodes = 0
         self.num_edges = 0
+        self.x_pos_max = 0
+        self.y_pos_max = 0
         self.topological = False  # flag indicating the map is topological
         self.metric = False  # flag indicating the map is metric
 
@@ -72,10 +74,12 @@ class Graph:
         self.nodes.clear()
         self.num_nodes = 0
         self.num_edges = 0
+        self.x_pos_max = 0
+        self.y_pos_max = 0
         self.topological = False
         self.metric = False
 
-    def random_topological_map(self, num_nodes, num_edges, max_weight, x_pos_max, y_pos_max):
+    def random_topological_map(self, num_nodes, num_edges, max_weight_multiplier, x_pos_max, y_pos_max):
         # if the number of edges is not possible, return
         if num_edges < num_nodes - 1 or num_edges > num_nodes * (num_nodes - 1) / 2:
             return None
@@ -84,10 +88,17 @@ class Graph:
         self.clear()
         self.topological = True
         self.metric = False
+        self.x_pos_max = x_pos_max
+        self.y_pos_max = y_pos_max
 
         previous = None  # keeps track of previous node
         positions = []  # keeps track of all used node positions
         connections = []  # keeps track of connected nodes
+
+        # set weight bounds based on maximum distance
+        max_distance = euclidean_distance((0, 0), (x_pos_max, y_pos_max))
+        min_weight = int(max_distance) + 1
+        max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
 
         # randomly generate each node and connect it to previous
         for i in range(num_nodes):
@@ -96,13 +107,13 @@ class Graph:
             while pos in positions:
                 pos = (random.randrange(0, x_pos_max), random.randrange(0, y_pos_max))
 
-            n = self.add_node(pos)  # add node
+            # add node
+            positions.append(pos)
+            n = self.add_node(pos)
 
             # connect node to previous node to ensure fully-connected graph
             if previous is not None:
-                # generate random weight greater than distance
-                distance = euclidean_distance(n.get_pos(), previous.get_pos())
-                weight = random.randrange(0, max_weight) + int(distance) + 1
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
 
                 # add edge
                 connections.append((i - 1, i))
@@ -121,20 +132,22 @@ class Graph:
                 i = random.randrange(0, num_nodes - 1)
                 j = random.randrange(0, num_nodes - 1)
 
-            # generate random weight greater than distance
-            distance = euclidean_distance(self.nodes[i].get_pos(), self.nodes[j].get_pos())
-            weight = random.randrange(0, max_weight) + int(distance) + 1
+            weight = random.randrange(min_weight, max_weight)  # generate random weight
 
             # add edge
             connections.append((i, j))
             connections.append((j, i))
             self.add_edge(self.nodes[i], self.nodes[j], weight)
 
-    def random_metric_map(self, num_rows, num_cols, max_weight):
+    def random_metric_map(self, num_rows, num_cols, max_weight_multiplier):
         # clear graph and indicate it is a metric map
         self.clear()
         self.topological = False
         self.metric = True
+
+        # set weight bounds based on maximum distance
+        min_weight = 1
+        max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
 
         # create 2d grid
         grid = [[Node((0, 0)) for a in range(num_rows)] for b in range(num_cols)]
@@ -149,7 +162,7 @@ class Graph:
         # add weights for each adjacent cell
         for i in range(num_rows):
             for j in range(num_cols):
-                weight = random.randrange(0, max_weight) + 1
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
                 if i > 0:
                     grid[i - 1][j].add_neighbor(grid[i][j], weight)
                 if j > 0:
@@ -159,14 +172,18 @@ class Graph:
                 if j < num_cols - 1:
                     grid[i][j + 1].add_neighbor(grid[i][j], weight)
 
-    def update_random_weights(self, proportion, max_weight):
+    def update_random_weights(self, proportion, max_weight_multiplier):
         if self.metric:
             num_updates = round(proportion * self.num_nodes)  # random number of nodes to update
+
+            # set weight bounds based on maximum distance
+            min_weight = 1
+            max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
 
             # randomly update node weights
             for _ in range(num_updates):
                 node = random.choice(self.nodes)  # choose random node to update
-                weight = random.randrange(0, max_weight) + 1  # random weight
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
 
                 # update weight of node to all adjacent nodes
                 for neighbor in node.get_connections():
@@ -174,19 +191,23 @@ class Graph:
         else:
             num_updates = round(proportion * self.num_edges)  # random number of weights to update
 
+            # set weight bounds based on maximum distance
+            max_distance = euclidean_distance((0, 0), (self.x_pos_max, self.y_pos_max))
+            min_weight = int(max_distance) + 1
+            max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
+
             # randomly update edge weights
             for _ in range(num_updates):
                 # select random pair of connected nodes
                 node1 = random.choice(self.nodes)
                 node2 = random.choice(list(node1.get_connections()))
 
-                # generate random weight greater than distance between nodes
-                distance = euclidean_distance(node1.get_pos(), node2.get_pos())
-                weight = random.randrange(0, max_weight) + int(distance) + 1
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
 
                 self.add_edge(node1, node2, weight)  # update weight of edge
 
 
+# given the end node and the parents, reconstructs path from start to end
 def reconstruct_path(parent, node):
     path = [node]
     while node in parent:
@@ -197,68 +218,83 @@ def reconstruct_path(parent, node):
 
 # https://en.wikipedia.org/wiki/Breadth-first_search
 def breadth_first_search(graph, start, end):
-    q = []
-    seen = []
-    parent = {}
-    q.append(start)
-    seen.append(start)
+    q = [start]  # queue of nodes
+    seen = [start]  # list of nodes seen
+    parent = {}  # dictionary from node to parent node
 
-    # Statistics
+    # statistics
     iterations = 0
 
-    while len(q) != 0:
-        n = q.pop(0)
+    # add unseen nodes until goal is found or queue is empty
+    while q:
         iterations += 1
+
+        n = q.pop(0)  # get node at front of queue
+
+        # if the node is the goal, return path and iterations
         if n == end:
-            return reconstruct_path(parent, n), seen, iterations
+            return reconstruct_path(parent, n), iterations
+
+        # add all unseen neighbors of node to back of queue
         for neighbor in graph.get_connections(n):
             if neighbor not in seen:
                 seen.append(neighbor)
                 parent[neighbor] = n
                 q.append(neighbor)
-    return [], seen, iterations
+
+    return [], iterations  # return empty path and iterations if path not found
 
 
 # https://en.wikipedia.org/wiki/Depth-first_search
 def depth_first_search(graph, start, end):
-    stack = []
-    seen = []
-    parent = {}
-    stack.append(start)
-    seen.append(start)
+    stack = [start]  # stack of nodes
+    seen = [start]  # list of nodes seen
+    parent = {}  # dictionary from node to parent node
 
-    # Statistics
+    # statistics
     iterations = 0
 
-    while len(stack) != 0:
-        n = stack.pop()
+    # add unseen nodes until goal is found or stack is empty
+    while stack:
         iterations += 1
+
+        n = stack.pop()  # get node from top of stack
+
+        # if the node is the goal, return path and iterations
         if n == end:
-            return reconstruct_path(parent, n), seen, iterations
+            return reconstruct_path(parent, n), iterations
+
+        # add all unseen neighbors of node to top of stack
         for neighbor in graph.get_connections(n):
             if neighbor not in seen:
                 seen.append(neighbor)
                 parent[neighbor] = n
                 stack.append(neighbor)
-    return [], seen, iterations
+
+    return [], iterations  # return empty path and iterations if path not found
 
 
+# https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 def dijkstra(graph, start, end):
-    distances = {}
-    parent = {}
-    pqueue = []
+    distances = {}  # dictionary from node to distance
+    parent = {}  # dictionary from node to parent node
+    pqueue = []  # priority queue of nodes using distance as key
 
+    # add all nodes to priority queue and indicate they cannot be reach
     for node in graph.get_nodes():
         distances[node] = np.inf
         pqueue.append(node)
-    distances[start] = 0
 
-    # Statistics
+    distances[start] = 0  # set distance to start to be 0
+
+    # statistics
     iterations = 0
-    seen = []
 
+    # update distances until priority queue is empty or goal reached
     while pqueue:
         iterations += 1
+
+        # find the node in the priority queue with minimum distance
         min_node = None
         for node in pqueue:
             if min_node is None:
@@ -266,39 +302,45 @@ def dijkstra(graph, start, end):
             elif distances[node] < distances[min_node]:
                 min_node = node
 
+        # if the minimum distance node is the goal, return path and iterations
         if min_node == end:
-            return reconstruct_path(parent, end), seen, iterations
+            return reconstruct_path(parent, end), iterations
 
+        # find total distances to neighbor of minimum distance node and update them if shorter
         for neighbor in graph.get_connections(min_node):
             temp_dist = distances[min_node] + graph.get_weight(min_node, neighbor)
             if temp_dist < distances[neighbor]:
                 distances[neighbor] = temp_dist
                 parent[neighbor] = min_node
 
-        seen.append(min_node)
-        pqueue.remove(min_node)
+        pqueue.remove(min_node)  # remove minimum distance node from priority queue
 
-    return [], seen, iterations
+    return [], iterations  # return empty path and iterations if path not found
 
 
+# finds straight line distance between two points
 def euclidean_distance(start, end):
     return ((end[0] - start[0])**2 + (end[1] - start[1])**2)**0.5
 
 
+# https://en.wikipedia.org/wiki/A*_search_algorithm
+# uses Euclidean distance as heuristic
 def a_star(graph, start, end):
-    open = [start]
-    parent = {}
-    cost_to_node = {}
+    open = [start]  # priority queue of open nodes with total cost estimate as key
+    parent = {}  # dictionary from node to parent node
+    cost_to_node = {start: 0}  # dictionary from node to cost from start to node
+
+    # dictionary from node to total cost estimate
     total_cost_estimate = {start: euclidean_distance(start.get_pos(), end.get_pos())}
 
-    cost_to_node[start] = 0
-
-    # Statistics
-    seen = []
+    # statistics
     iterations = 0
 
-    while len(open) != 0:
+    # update distances until priority queue is empty or goal reached
+    while open:
         iterations += 1
+
+        # find the node in the priority queue with minimum total cost estimate
         min_node = None
         min_cost = np.inf
         for open_node in open:
@@ -306,12 +348,13 @@ def a_star(graph, start, end):
                 min_cost = total_cost_estimate[open_node]
                 min_node = open_node
 
-        seen.append(min_node)
-
+        # if the minimum total cost estimate node is the goal, return path and iterations
         if min_node == end:
-            return reconstruct_path(parent, min_node), seen, iterations
+            return reconstruct_path(parent, min_node), iterations
 
-        open.remove(min_node)
+        open.remove(min_node)  # remove minimum total cost estimate node from priority queue
+
+        # find total distances to neighbor of minimum total cost estimate node and update them if shorter
         for neighbor in graph.get_connections(min_node):
             temp_cost = cost_to_node[min_node] + min_node.get_weight(neighbor)
             if neighbor not in cost_to_node or temp_cost < cost_to_node[neighbor]:
@@ -321,24 +364,28 @@ def a_star(graph, start, end):
                 if neighbor not in open:
                     open.append(neighbor)
 
-    return [], seen, iterations
+    return [], iterations  # return empty path and iterations if path not found
 
 
+# https://www.ri.cmu.edu/pub_files/pub3/stentz_anthony__tony__1994_2/stentz_anthony__tony__1994_2.pdf
 def d_star(graph, start, end):
-    open = []
-    closed = []
-    new = []
+    open = []  # list of open nodes
+    closed = []  # list of closed nodes
+    new = []  # list of new nodes
 
-    c = graph.get_all_connections()
+    c = graph.get_all_connections()  # original edges in graph
     b = {}  # back pointers to next node
-    k = {end: 0}  # cost from node to goal
+    k = {end: 0}  # lowest cost estimate from node to goal
     h = {}  # heuristic estimate of cost from node to goal
+
+    # update heuristic estimate for each node and indicate it has no parent
     for n in graph.get_nodes():
         b[n] = None
         h[n] = euclidean_distance(n.get_pos(), end.get_pos())
 
+    # find the node with minimum cost estimate from open list and return node with cost
     def min_state_val():
-        if len(open) == 0:
+        if not open:
             return None, -1
         min_node = None
         min_cost = np.inf
@@ -348,39 +395,50 @@ def d_star(graph, start, end):
                 min_node = open_node
         return min_node, min_cost
 
+    # find the node with minimum cost estimate from open list and return node
     def min_state():
         state, _ = min_state_val()
         return state
 
+    # find the node with minimum cost estimate from open list and return cost
     def min_val():
         _, value = min_state_val()
         return value
 
+    # removes node from open list and adds it to closed
     def delete(x):
         open.remove(x)
         closed.append(x)
 
+    # insert node into open list with new estimated cost
     def insert(x, h_new):
-        if x in new:
-            k[x] = h_new
+        if x in new:  # if node is in new list
+            k[x] = h_new  # update lowest cost estimate
+
+            # move node from new list to open list
             new.remove(x)
             open.append(x)
-        elif x in open:
-            k[x] = min(k[x], h_new)
-        else:
-            k[x] = min(h[x], h_new)
+        elif x in open:  # if node is in open
+            k[x] = min(k[x], h_new)  # update lowest cost estimate
+        else:  # if node is in closed
+            k[x] = min(h[x], h_new)  # update lowest cost estimate
+
+            # move node from closed list to open list
             closed.remove(x)
             open.append(x)
-        h[x] = h_new
 
+        h[x] = h_new  # update estimate cost of node
+
+    # proces minimum cost estimate node from open list
     def process_state():
-        x = min_state()
+        x = min_state()  # get minimum cost estimate node from open list
 
+        # if there is no minimum cost estimate node from open list indicate so
         if x is None:
             return -1
 
-        k_old = k[x]
-        delete(x)
+        k_old = k[x]  # store minium cost estimate of minimum cost estimate node
+        delete(x)  # move minimum cost estimate node from open list to closed list
 
         if k_old < h[x]:
             for y in graph.get_connections(x):
@@ -406,46 +464,63 @@ def d_star(graph, start, end):
                             insert(y, h[y])
         return min_val()
 
+    # update cost between two nodes and propagate changes
     def modify_cost(x, y, cval):
         c[(x, y)] = cval
         if x in closed:
             insert(x, h[x])
         return min_val()
 
+    # tests if a < b
     def less(a, b):
         if a < b:
             return True
         return False
 
+    # simulates the path traversal
     def move_robot():
+        # add all nodes to new list
         for n in graph.get_nodes():
             new.append(n)
-        insert(end, 0)
-        val = 0
+
+        insert(end, 0)  # move end node to open list
+        val = 0  # keep track of process state return values
+
+        # while path is not found and can be found, process the state
         while start not in closed and val != -1:
             val = process_state()
+
+        # if no path was found, return empty path
         if start in new:
-            return None
-        r = start
-        path = [r]
-        s = c
+            return []
+
+        r = start  # current node in simulation
+        path = [r]  # path found
+        s = c  # updated edges after environment changed
+
+        # construct path from start to goal
         while r != end:
+            # if the weight of an edge has changed, update original edges
             for connection in c.keys():
                 if s[connection] != c[connection]:
                     val = modify_cost(connection[0], connection[1], s[connection])
+
+            # propagate changes of updated edge
             while less(val, h[r]) and val != -1:
                 val = process_state()
-            r = b[r]
-            path.append(r)
-        return path
 
-    return move_robot()
+            r = b[r]  # move to next node
+            path.append(r)  # add node to path
+
+        return path  # return path from start to goal
+
+    return move_robot()  # return path from start to goal
 
 
 if __name__ == '__main__':
     g = Graph()
-    # g.random_topological_map(10, 17, 5, 10, 10)
-    g.random_metric_map(4, 4, 10)
+    g.random_topological_map(1000, 3000, 100, 4000, 4000)
+    # g.random_metric_map(4, 4, 10)
 
     # n1 = g.add_node((0, 0))
     # n2 = g.add_node((5, 2))
@@ -476,42 +551,44 @@ if __name__ == '__main__':
     # g.add_edge(n8, n10, 7)
     # g.add_edge(n9, n10, 1)
 
-    print('Before')
-    before_connections = g.get_all_connections()
-    for node1, node2 in before_connections:
-        print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
+    # print('Before')
+    # before_connections = g.get_all_connections()
+    # for node1, node2 in before_connections:
+    #     print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
+    #
+    # g.update_random_weights(0.7, 20)
+    #
+    # print('\nAfter')
+    # after_connections = g.get_all_connections()
+    # for node1, node2 in after_connections:
+    #     print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
 
-    g.update_random_weights(0.7, 20)
+    n1 = random.choice(g.get_nodes())
+    n9 = random.choice(g.get_nodes())
+    print('BFS')
+    nodes, _ = breadth_first_search(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
 
-    print('\nAfter')
-    after_connections = g.get_all_connections()
-    for node1, node2 in after_connections:
-        print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
+    print('DFS')
+    nodes, _ = depth_first_search(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
 
-    # print('BFS')
-    # nodes, _, _ = breadth_first_search(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('DFS')
-    # nodes, _, _ = depth_first_search(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('Dijkstra')
-    # nodes, _, _ = dijkstra(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('A*')
-    # nodes, _, _ = a_star(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('D*')
-    # for node in d_star(g, n1, n9):
-    #     print(node.get_pos())
+    print('Dijkstra')
+    nodes, _ = dijkstra(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
+
+    print('A*')
+    nodes, _ = a_star(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
+
+    print('D*')
+    for node in d_star(g, n1, n9):
+        print(node.get_pos())
