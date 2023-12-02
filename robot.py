@@ -189,3 +189,15 @@ if __name__ == "__main__":
     c, r = run_experiments(graph.breadth_first_search, 200)
     print(c)
     print(r)
+    
+    print("Dijkstra experiments")
+    c, r = run_experiments(graph.dijkstra, 200)
+    print(c)
+    print(r)
+
+    print("A* experiments")
+    c, r = run_experiments(graph.a_star, 200)
+    print(c)
+    print(r)
+
+    # TODO: D*
