@@ -1,6 +1,5 @@
 import numpy as np
 import random
-import copy
 
 
 class Node:
