@@ -98,7 +98,7 @@ class Graph:
         # set weight bounds based on maximum distance
         max_distance = euclidean_distance((0, 0), (x_pos_max, y_pos_max))
         min_weight = int(max_distance) + 1
-        max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
+        max_weight = int(max_weight_multiplier * min_weight)
 
         # randomly generate each node and connect it to previous
         for i in range(num_nodes):
@@ -147,7 +147,7 @@ class Graph:
 
         # set weight bounds based on maximum distance
         min_weight = 1
-        max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
+        max_weight = int(max_weight_multiplier * min_weight)
 
         # create 2d grid
         grid = [[Node((0, 0)) for a in range(num_rows)] for b in range(num_cols)]
@@ -178,7 +178,7 @@ class Graph:
 
             # set weight bounds based on maximum distance
             min_weight = 1
-            max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
+            max_weight = int(max_weight_multiplier * min_weight)
 
             # randomly update node weights
             for _ in range(num_updates):
@@ -194,7 +194,7 @@ class Graph:
             # set weight bounds based on maximum distance
             max_distance = euclidean_distance((0, 0), (self.x_pos_max, self.y_pos_max))
             min_weight = int(max_distance) + 1
-            max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
+            max_weight = int(max_weight_multiplier * min_weight)
 
             # randomly update edge weights
             for _ in range(num_updates):
