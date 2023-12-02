@@ -96,7 +96,9 @@ class Graph:
             while pos in positions:
                 pos = (random.randrange(0, x_pos_max), random.randrange(0, y_pos_max))
 
-            n = self.add_node(pos)  # add node
+            # add node
+            positions.append(pos)
+            n = self.add_node(pos)
 
             # connect node to previous node to ensure fully-connected graph
             if previous is not None:
@@ -499,8 +501,8 @@ def d_star(graph, start, end):
 
 if __name__ == '__main__':
     g = Graph()
-    # g.random_topological_map(10, 17, 5, 10, 10)
-    g.random_metric_map(4, 4, 10)
+    g.random_topological_map(1000, 3000, 5000, 4000, 4000)
+    # g.random_metric_map(4, 4, 10)
 
     # n1 = g.add_node((0, 0))
     # n2 = g.add_node((5, 2))
@@ -531,42 +533,44 @@ if __name__ == '__main__':
     # g.add_edge(n8, n10, 7)
     # g.add_edge(n9, n10, 1)
 
-    print('Before')
-    before_connections = g.get_all_connections()
-    for node1, node2 in before_connections:
-        print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
+    # print('Before')
+    # before_connections = g.get_all_connections()
+    # for node1, node2 in before_connections:
+    #     print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
+    #
+    # g.update_random_weights(0.7, 20)
+    #
+    # print('\nAfter')
+    # after_connections = g.get_all_connections()
+    # for node1, node2 in after_connections:
+    #     print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
 
-    g.update_random_weights(0.7, 20)
+    n1 = random.choice(g.get_nodes())
+    n9 = random.choice(g.get_nodes())
+    print('BFS')
+    nodes, _ = breadth_first_search(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
 
-    print('\nAfter')
-    after_connections = g.get_all_connections()
-    for node1, node2 in after_connections:
-        print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
+    print('DFS')
+    nodes, _ = depth_first_search(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
 
-    # print('BFS')
-    # nodes, _, _ = breadth_first_search(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('DFS')
-    # nodes, _, _ = depth_first_search(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('Dijkstra')
-    # nodes, _, _ = dijkstra(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('A*')
-    # nodes, _, _ = a_star(g, n1, n9)
-    # for node in nodes:
-    #     print(node.get_pos())
-    # print()
-    #
-    # print('D*')
-    # for node in d_star(g, n1, n9):
-    #     print(node.get_pos())
+    print('Dijkstra')
+    nodes, _ = dijkstra(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
+
+    print('A*')
+    nodes, _ = a_star(g, n1, n9)
+    for node in nodes:
+        print(node.get_pos())
+    print()
+
+    print('D*')
+    for node in d_star(g, n1, n9):
+        print(node.get_pos())
