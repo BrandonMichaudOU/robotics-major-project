@@ -196,7 +196,7 @@ def reconstruct_path(parent, node):
 
 
 # https://en.wikipedia.org/wiki/Breadth-first_search
-def breadth_first_search(g, start, end):
+def breadth_first_search(graph, start, end):
     q = []
     seen = []
     parent = {}
@@ -211,7 +211,7 @@ def breadth_first_search(g, start, end):
         iterations += 1
         if n == end:
             return reconstruct_path(parent, n), seen, iterations
-        for neighbor in g.get_connections(n):
+        for neighbor in graph.get_connections(n):
             if neighbor not in seen:
                 seen.append(neighbor)
                 parent[neighbor] = n
@@ -220,7 +220,7 @@ def breadth_first_search(g, start, end):
 
 
 # https://en.wikipedia.org/wiki/Depth-first_search
-def depth_first_search(g, start, end):
+def depth_first_search(graph, start, end):
     stack = []
     seen = []
     parent = {}
@@ -235,7 +235,7 @@ def depth_first_search(g, start, end):
         iterations += 1
         if n == end:
             return reconstruct_path(parent, n), seen, iterations
-        for neighbor in g.get_connections(n):
+        for neighbor in graph.get_connections(n):
             if neighbor not in seen:
                 seen.append(neighbor)
                 parent[neighbor] = n
@@ -243,12 +243,12 @@ def depth_first_search(g, start, end):
     return [], seen, iterations
 
 
-def dijkstra(g, start, end):
+def dijkstra(graph, start, end):
     distances = {}
     parent = {}
     pqueue = []
 
-    for node in g.get_nodes():
+    for node in graph.get_nodes():
         distances[node] = np.inf
         pqueue.append(node)
     distances[start] = 0
@@ -269,8 +269,8 @@ def dijkstra(g, start, end):
         if min_node == end:
             return reconstruct_path(parent, end), seen, iterations
 
-        for neighbor in g.get_connections(min_node):
-            temp_dist = distances[min_node] + g.get_weight(min_node, neighbor)
+        for neighbor in graph.get_connections(min_node):
+            temp_dist = distances[min_node] + graph.get_weight(min_node, neighbor)
             if temp_dist < distances[neighbor]:
                 distances[neighbor] = temp_dist
                 parent[neighbor] = min_node
@@ -285,7 +285,7 @@ def euclidean_distance(start, end):
     return ((end[0] - start[0])**2 + (end[1] - start[1])**2)**0.5
 
 
-def a_star(g, start, end):
+def a_star(graph, start, end):
     open = [start]
     parent = {}
     cost_to_node = {}
@@ -312,7 +312,7 @@ def a_star(g, start, end):
             return reconstruct_path(parent, min_node), seen, iterations
 
         open.remove(min_node)
-        for neighbor in g.get_connections(min_node):
+        for neighbor in graph.get_connections(min_node):
             temp_cost = cost_to_node[min_node] + min_node.get_weight(neighbor)
             if neighbor not in cost_to_node or temp_cost < cost_to_node[neighbor]:
                 parent[neighbor] = min_node
@@ -324,16 +324,16 @@ def a_star(g, start, end):
     return [], seen, iterations
 
 
-def d_star(g, start, end):
+def d_star(graph, start, end):
     open = []
     closed = []
     new = []
 
-    c = g.get_all_connections()
+    c = graph.get_all_connections()
     b = {}  # back pointers to next node
     k = {end: 0}  # cost from node to goal
     h = {}  # heuristic estimate of cost from node to goal
-    for n in g.get_nodes():
+    for n in graph.get_nodes():
         b[n] = None
         h[n] = euclidean_distance(n.get_pos(), end.get_pos())
 
@@ -383,18 +383,18 @@ def d_star(g, start, end):
         delete(x)
 
         if k_old < h[x]:
-            for y in g.get_connections(x):
+            for y in graph.get_connections(x):
                 if y not in new and h[y] <= k_old and h[x] > h[y] + c[(x, y)]:
                     b[x] = y
                     h[x] = h[y] + c[(x, y)]
         if k_old == h[x]:
-            for y in g.get_connections(x):
+            for y in graph.get_connections(x):
                 if (y in new or (b[y] == x and h[y] != h[x] + c[(x, y)]) or
                         (b[y] != x and h[y] > h[x] + c[(x, y)])):
                     b[y] = x
                     insert(y, h[x] + c[(x, y)])
         else:
-            for y in g.get_connections(x):
+            for y in graph.get_connections(x):
                 if y in new or (b[y] == x and h[y] != h[x] + c[(x, y)]):
                     b[y] = x
                     insert(y, h[x] + c[(x, y)])
@@ -418,7 +418,7 @@ def d_star(g, start, end):
         return False
 
     def move_robot():
-        for n in g.get_nodes():
+        for n in graph.get_nodes():
             new.append(n)
         insert(end, 0)
         val = 0
