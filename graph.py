@@ -496,7 +496,7 @@ def d_star(graph, start, end):
 
         r = start  # current node in simulation
         path = [r]  # path found
-        s = c  # updated edges after environment changed
+        s = c  # TODO: updated edges after environment changed
 
         # construct path from start to goal
         while r != end:
