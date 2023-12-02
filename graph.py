@@ -4,7 +4,7 @@ import copy
 
 
 class Node:
-    def __init__(self, name, pos):
+    def __init__(self, pos):
         self.pos = pos
         self.adjacent = {}  # dictionary from node to weight
 
@@ -21,12 +21,13 @@ class Node:
         self.adjacent[neighbor] = weight
 
 
-
 class Graph:
     def __init__(self):
         self.nodes = []  # List of nodes in graph
         self.num_nodes = 0
         self.num_edges = 0
+        self.topological = False
+        self.metric = False
 
     def get_nodes(self):
         return self.nodes
@@ -47,7 +48,7 @@ class Graph:
 
     def add_node(self, pos):
         self.num_nodes = self.num_nodes + 1
-        new_node = Node(pos, pos)
+        new_node = Node(pos)
         self.nodes.append(new_node)
         return new_node
 
@@ -62,23 +63,19 @@ class Graph:
         source.add_neighbor(dest, weight)
         dest.add_neighbor(source, weight)
 
-    def update_random_weights(self, proportion, max_weight):
-        num_updates = round(proportion * self.num_edges)
-        for _ in range(num_updates):
-            node1 = random.choice(self.nodes)
-            node2 = random.choice(list(node1.get_connections()))
-            distance = euclidean_distance(node1.get_pos(), node2.get_pos())
-            weight = random.randrange(0, max_weight) + int(distance) + 1
-            self.add_edge(node1, node2, weight)
-
     def clear(self):
         self.nodes.clear()
         self.num_nodes = 0
+        self.num_edges = 0
+        self.topological = False
+        self.metric = False
 
     def random_topological_map(self, num_nodes, num_edges, max_weight, x_pos_max, y_pos_max):
         if num_edges < num_nodes - 1 or num_edges > num_nodes * (num_nodes - 1) / 2:
             return None
         self.clear()
+        self.topological = True
+        self.metric = False
         previous = None
         positions = []
         for _ in range(num_nodes):
@@ -100,6 +97,45 @@ class Graph:
             distance = euclidean_distance(self.nodes[connection[0]].get_pos(), self.nodes[connection[1]].get_pos())
             weight = random.randrange(0, max_weight) + int(distance) + 1
             self.add_edge(self.nodes[connection[0]], self.nodes[connection[1]], weight)
+
+    def random_metric_map(self, num_rows, num_cols, max_weight):
+        self.clear()
+        self.topological = False
+        self.metric = True
+        grid = [[Node((0, 0)) for a in range(num_rows)] for b in range(num_cols)]
+        for i in range(num_rows):
+            for j in range(num_cols):
+                pos = (i, j)
+                n = self.add_node(pos)
+                grid[i][j] = n
+        for i in range(num_rows):
+            for j in range(num_cols):
+                weight = random.randrange(0, max_weight) + 1
+                if i > 0:
+                    grid[i - 1][j].add_neighbor(grid[i][j], weight)
+                if j > 0:
+                    grid[i][j - 1].add_neighbor(grid[i][j], weight)
+                if i < num_rows - 1:
+                    grid[i + 1][j].add_neighbor(grid[i][j], weight)
+                if j < num_cols - 1:
+                    grid[i][j + 1].add_neighbor(grid[i][j], weight)
+
+    def update_random_weights(self, proportion, max_weight):
+        if self.metric:
+            num_updates = round(proportion * self.num_nodes)
+            for _ in range(num_updates):
+                node = random.choice(self.nodes)
+                weight = random.randrange(0, max_weight) + 1
+                for neighbor in node.get_connections():
+                    neighbor.add_neighbor(node, weight)
+        else:
+            num_updates = round(proportion * self.num_edges)
+            for _ in range(num_updates):
+                node1 = random.choice(self.nodes)
+                node2 = random.choice(list(node1.get_connections()))
+                distance = euclidean_distance(node1.get_pos(), node2.get_pos())
+                weight = random.randrange(0, max_weight) + int(distance) + 1
+                self.add_edge(node1, node2, weight)
 
 
 def reconstruct_path(parent, node):
@@ -360,45 +396,47 @@ def d_star(graph, start, end):
 if __name__ == '__main__':
     g = Graph()
     # g.random_topological_map(10, 17, 5, 10, 10)
+    g.random_metric_map(4, 4, 10)
 
-    n1 = g.add_node((0, 0))
-    n2 = g.add_node((5, 2))
-    n3 = g.add_node((5, -2))
-    n4 = g.add_node((8, 0))
-    n5 = g.add_node((10, 1))
-    n6 = g.add_node((12, 2))
-    n7 = g.add_node((12, 0))
-    n8 = g.add_node((15, 0))
-    n9 = g.add_node((20, 0))
-    n10 = g.add_node((20, -2))
-
-    g.add_edge(n1, n2, 2)
-    g.add_edge(n1, n3, 5)
-    g.add_edge(n2, n3, 1)
-    g.add_edge(n2, n4, 3)
-    g.add_edge(n2, n5, 1)
-    g.add_edge(n3, n4, 2)
-    g.add_edge(n3, n7, 6)
-    g.add_edge(n3, n10, 30)
-    g.add_edge(n4, n5, 1)
-    g.add_edge(n4, n7, 8)
-    g.add_edge(n5, n6, 7)
-    g.add_edge(n6, n7, 1)
-    g.add_edge(n6, n8, 6)
-    g.add_edge(n7, n8, 4)
-    g.add_edge(n8, n9, 9)
-    g.add_edge(n8, n10, 7)
-    g.add_edge(n9, n10, 1)
+    # n1 = g.add_node((0, 0))
+    # n2 = g.add_node((5, 2))
+    # n3 = g.add_node((5, -2))
+    # n4 = g.add_node((8, 0))
+    # n5 = g.add_node((10, 1))
+    # n6 = g.add_node((12, 2))
+    # n7 = g.add_node((12, 0))
+    # n8 = g.add_node((15, 0))
+    # n9 = g.add_node((20, 0))
+    # n10 = g.add_node((20, -2))
+    #
+    # g.add_edge(n1, n2, 2)
+    # g.add_edge(n1, n3, 5)
+    # g.add_edge(n2, n3, 1)
+    # g.add_edge(n2, n4, 3)
+    # g.add_edge(n2, n5, 1)
+    # g.add_edge(n3, n4, 2)
+    # g.add_edge(n3, n7, 6)
+    # g.add_edge(n3, n10, 30)
+    # g.add_edge(n4, n5, 1)
+    # g.add_edge(n4, n7, 8)
+    # g.add_edge(n5, n6, 7)
+    # g.add_edge(n6, n7, 1)
+    # g.add_edge(n6, n8, 6)
+    # g.add_edge(n7, n8, 4)
+    # g.add_edge(n8, n9, 9)
+    # g.add_edge(n8, n10, 7)
+    # g.add_edge(n9, n10, 1)
 
     print('Before')
     before_connections = g.get_all_connections()
     for node1, node2 in before_connections:
         print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
 
-    g.update_random_weights(0.7, 75)
+    g.update_random_weights(0.7, 20)
 
     print('\nAfter')
-    for node1, node2 in before_connections:
+    after_connections = g.get_all_connections()
+    for node1, node2 in after_connections:
         print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
 
     # print('BFS')
