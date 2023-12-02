@@ -26,6 +26,8 @@ class Graph:
         self.nodes = []  # list of nodes in graph
         self.num_nodes = 0
         self.num_edges = 0
+        self.x_pos_max = 0
+        self.y_pos_max = 0
         self.topological = False  # flag indicating the map is topological
         self.metric = False  # flag indicating the map is metric
 
@@ -72,10 +74,12 @@ class Graph:
         self.nodes.clear()
         self.num_nodes = 0
         self.num_edges = 0
+        self.x_pos_max = 0
+        self.y_pos_max = 0
         self.topological = False
         self.metric = False
 
-    def random_topological_map(self, num_nodes, num_edges, max_weight, x_pos_max, y_pos_max):
+    def random_topological_map(self, num_nodes, num_edges, max_weight_multiplier, x_pos_max, y_pos_max):
         # if the number of edges is not possible, return
         if num_edges < num_nodes - 1 or num_edges > num_nodes * (num_nodes - 1) / 2:
             return None
@@ -84,10 +88,17 @@ class Graph:
         self.clear()
         self.topological = True
         self.metric = False
+        self.x_pos_max = x_pos_max
+        self.y_pos_max = y_pos_max
 
         previous = None  # keeps track of previous node
         positions = []  # keeps track of all used node positions
         connections = []  # keeps track of connected nodes
+
+        # set weight bounds based on maximum distance
+        max_distance = euclidean_distance((0, 0), (x_pos_max, y_pos_max))
+        min_weight = int(max_distance) + 1
+        max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
 
         # randomly generate each node and connect it to previous
         for i in range(num_nodes):
@@ -102,9 +113,7 @@ class Graph:
 
             # connect node to previous node to ensure fully-connected graph
             if previous is not None:
-                # generate random weight greater than distance
-                distance = euclidean_distance(n.get_pos(), previous.get_pos())
-                weight = random.randrange(0, max_weight) + int(distance) + 1
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
 
                 # add edge
                 connections.append((i - 1, i))
@@ -123,20 +132,22 @@ class Graph:
                 i = random.randrange(0, num_nodes - 1)
                 j = random.randrange(0, num_nodes - 1)
 
-            # generate random weight greater than distance
-            distance = euclidean_distance(self.nodes[i].get_pos(), self.nodes[j].get_pos())
-            weight = random.randrange(0, max_weight) + int(distance) + 1
+            weight = random.randrange(min_weight, max_weight)  # generate random weight
 
             # add edge
             connections.append((i, j))
             connections.append((j, i))
             self.add_edge(self.nodes[i], self.nodes[j], weight)
 
-    def random_metric_map(self, num_rows, num_cols, max_weight):
+    def random_metric_map(self, num_rows, num_cols, max_weight_multiplier):
         # clear graph and indicate it is a metric map
         self.clear()
         self.topological = False
         self.metric = True
+
+        # set weight bounds based on maximum distance
+        min_weight = 1
+        max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
 
         # create 2d grid
         grid = [[Node((0, 0)) for a in range(num_rows)] for b in range(num_cols)]
@@ -151,7 +162,7 @@ class Graph:
         # add weights for each adjacent cell
         for i in range(num_rows):
             for j in range(num_cols):
-                weight = random.randrange(0, max_weight) + 1
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
                 if i > 0:
                     grid[i - 1][j].add_neighbor(grid[i][j], weight)
                 if j > 0:
@@ -161,14 +172,18 @@ class Graph:
                 if j < num_cols - 1:
                     grid[i][j + 1].add_neighbor(grid[i][j], weight)
 
-    def update_random_weights(self, proportion, max_weight):
+    def update_random_weights(self, proportion, max_weight_multiplier):
         if self.metric:
             num_updates = round(proportion * self.num_nodes)  # random number of nodes to update
+
+            # set weight bounds based on maximum distance
+            min_weight = 1
+            max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
 
             # randomly update node weights
             for _ in range(num_updates):
                 node = random.choice(self.nodes)  # choose random node to update
-                weight = random.randrange(0, max_weight) + 1  # random weight
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
 
                 # update weight of node to all adjacent nodes
                 for neighbor in node.get_connections():
@@ -176,15 +191,18 @@ class Graph:
         else:
             num_updates = round(proportion * self.num_edges)  # random number of weights to update
 
+            # set weight bounds based on maximum distance
+            max_distance = euclidean_distance((0, 0), (self.x_pos_max, self.y_pos_max))
+            min_weight = int(max_distance) + 1
+            max_weight = int(random.uniform(1, max_weight_multiplier) * min_weight)
+
             # randomly update edge weights
             for _ in range(num_updates):
                 # select random pair of connected nodes
                 node1 = random.choice(self.nodes)
                 node2 = random.choice(list(node1.get_connections()))
 
-                # generate random weight greater than distance between nodes
-                distance = euclidean_distance(node1.get_pos(), node2.get_pos())
-                weight = random.randrange(0, max_weight) + int(distance) + 1
+                weight = random.randrange(min_weight, max_weight)  # generate random weight
 
                 self.add_edge(node1, node2, weight)  # update weight of edge
 
@@ -501,7 +519,7 @@ def d_star(graph, start, end):
 
 if __name__ == '__main__':
     g = Graph()
-    g.random_topological_map(1000, 3000, 5000, 4000, 4000)
+    g.random_topological_map(1000, 3000, 100, 4000, 4000)
     # g.random_metric_map(4, 4, 10)
 
     # n1 = g.add_node((0, 0))
