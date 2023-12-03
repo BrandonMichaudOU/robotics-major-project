@@ -347,12 +347,13 @@ def a_star(graph, start, end):
 
 
 # https://www.ri.cmu.edu/pub_files/pub3/stentz_anthony__tony__1994_2/stentz_anthony__tony__1994_2.pdf
-def d_star(graph, start, end):
+def d_star(graph, start, end, original_costs, updated_costs):
     open = []  # list of open nodes
     closed = []  # list of closed nodes
     new = []  # list of new nodes
 
-    c = graph.get_all_connections()  # original edges in graph
+    c = original_costs  # original edges in graph
+    s = updated_costs  # updated edges in graph
     b = {}  # back pointers to next node
     k = {end: 0}  # lowest cost estimate from node to goal
     h = {}  # heuristic estimate of cost from node to goal
@@ -475,7 +476,6 @@ def d_star(graph, start, end):
 
         r = start  # current node in simulation
         path = [r]  # path found
-        s = c  # TODO: updated edges after environment changed
 
         # construct path from start to goal
         while r != end:
@@ -494,80 +494,3 @@ def d_star(graph, start, end):
         return path  # return path from start to goal
 
     return move_robot()  # return path from start to goal
-
-
-if __name__ == '__main__':
-    g = Graph()
-    g.random_topological_map(1000, 3000, 100, 4000, 4000)
-    # g.random_metric_map(4, 4, 10)
-
-    # n1 = g.add_node((0, 0))
-    # n2 = g.add_node((5, 2))
-    # n3 = g.add_node((5, -2))
-    # n4 = g.add_node((8, 0))
-    # n5 = g.add_node((10, 1))
-    # n6 = g.add_node((12, 2))
-    # n7 = g.add_node((12, 0))
-    # n8 = g.add_node((15, 0))
-    # n9 = g.add_node((20, 0))
-    # n10 = g.add_node((20, -2))
-    #
-    # g.add_edge(n1, n2, 2)
-    # g.add_edge(n1, n3, 5)
-    # g.add_edge(n2, n3, 1)
-    # g.add_edge(n2, n4, 3)
-    # g.add_edge(n2, n5, 1)
-    # g.add_edge(n3, n4, 2)
-    # g.add_edge(n3, n7, 6)
-    # g.add_edge(n3, n10, 30)
-    # g.add_edge(n4, n5, 1)
-    # g.add_edge(n4, n7, 8)
-    # g.add_edge(n5, n6, 7)
-    # g.add_edge(n6, n7, 1)
-    # g.add_edge(n6, n8, 6)
-    # g.add_edge(n7, n8, 4)
-    # g.add_edge(n8, n9, 9)
-    # g.add_edge(n8, n10, 7)
-    # g.add_edge(n9, n10, 1)
-
-    # print('Before')
-    # before_connections = g.get_all_connections()
-    # for node1, node2 in before_connections:
-    #     print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
-    #
-    # g.update_random_weights(0.7, 20)
-    #
-    # print('\nAfter')
-    # after_connections = g.get_all_connections()
-    # for node1, node2 in after_connections:
-    #     print(f'from {node1.get_pos()} to {node2.get_pos()}: {before_connections[(node1, node2)]}')
-
-    n1 = random.choice(g.get_nodes())
-    n9 = random.choice(g.get_nodes())
-    print('BFS')
-    nodes, _ = breadth_first_search(g, n1, n9)
-    for node in nodes:
-        print(node.get_pos())
-    print()
-
-    print('DFS')
-    nodes, _ = depth_first_search(g, n1, n9)
-    for node in nodes:
-        print(node.get_pos())
-    print()
-
-    print('Dijkstra')
-    nodes, _ = dijkstra(g, n1, n9)
-    for node in nodes:
-        print(node.get_pos())
-    print()
-
-    print('A*')
-    nodes, _ = a_star(g, n1, n9)
-    for node in nodes:
-        print(node.get_pos())
-    print()
-
-    print('D*')
-    for node in d_star(g, n1, n9):
-        print(node.get_pos())

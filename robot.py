@@ -1,194 +1,188 @@
 from datetime import datetime
 import random
 import graph
+import numpy as np
 
 
-class Robot:
-    def __init__(self, g, start_node, end_node):
-        self.g = g
-        self.current_path = []
-        self.current_node = start_node
-        self.destination_node = end_node
-        self.blocked_list = []  # maybe
-
-    def robot_go(self, algorithm, proportion_dynamic, max_weight):
-        # Performance metrics
-        cost_travelled = 0
-        start_time = datetime.now()
-
-        # Generate initial path
-        self.current_path = algorithm(self.g, self.current_node, self.destination_node)
-
-        # Randomly add 'dynamic' obstacles to the map
-        self.g.update_random_weights(proportion_dynamic, max_weight)
-
-        # Travel through the path
-        self.current_path.pop(0)  # remove starting node
-        while self.current_node != self.destination_node:
-            next_node = self.current_path[0]
-            
-            # Travel through the node
-            cost_travelled += self.g.get_weight(self.current_node, next_node)
-            self.current_node = self.current_path.pop(0)
-
-        end_time = datetime.now()
-        runtime = end_time - start_time
-        return cost_travelled, runtime.total_seconds() * 1000
+# calculates cost to travel along a path
+def traverse_path(path, costs):
+    cost = 0
+    for i in range(len(path) - 1):
+        start = path[i]
+        end = path[i + 1]
+        cost += costs[(start, end)]
+    return cost
 
 
-def run_experiments(algorithm, num_runs=100):
-    avg_costs = []
-    avg_runtimes = []
+# runs experiments using specified maps
+def run_experiments(topological_sizes, metric_sizes, max_weight_multiplier, dynamic_proportion, num_runs):
+    # statistics
+    avg_costs = {}
+    avg_times = {}
 
-    # Topological, small, static
-    size = 25
-    costs = []
-    runtimes = []
-    
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_topological_map(size, size*2, 2, 10, 10)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, 0, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+    # run experiment for both topological and metric maps
+    for rep in ['t', 'm']:
+        sizes = topological_sizes if rep == 't' else metric_sizes  # get sizes of maps
 
-    # Topological, small, dynamic
-    size = 25
-    costs = []
-    runtimes = []
-    
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_topological_map(size, size*2, 2, 10, 10)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, .10, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+        # run experiment for all sizes of the map
+        for size in sizes:
+            # store times and costs
+            static_times = np.empty((num_runs, 5))
+            dynamic_times = np.empty((num_runs, 5))
 
-    # Topological, big, static
-    size = 100
-    costs = []
-    runtimes = []
+            static_costs = np.empty((num_runs, 5))
+            dynamic_costs = np.empty((num_runs, 5))
 
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_topological_map(size, size*2, 2, 10, 10)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, 0, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+            # run experiment specified number times
+            for run in range(num_runs):
+                # create random map
+                g = graph.Graph()
+                g.random_topological_map(size, 4 * size, max_weight_multiplier, size, size) if rep == 't' else (
+                    g.random_metric_map(size, size, max_weight_multiplier))
+                original_costs = g.get_all_connections()
 
-    # Topological, big, dynamic
-    size = 100
-    costs = []
-    runtimes = []
+                two_nodes = random.sample(g.get_nodes(), 2)  # pick start and end node
 
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_topological_map(size, size*2, 2, 10, 10)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, .10, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+                # plan breadth first search paths
+                start_time = datetime.now()
+                bfs_path = graph.breadth_first_search(g, two_nodes[0], two_nodes[1])
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][0] = runtime.total_seconds() * 1000
+                dynamic_times[run][0] = runtime.total_seconds() * 1000
 
-    # Metric, small, static
-    num_cols = 10
-    num_rows = 10
-    costs = []
-    runtimes = []
+                # plan depth first search path
+                start_time = datetime.now()
+                dfs_path = graph.depth_first_search(g, two_nodes[0], two_nodes[1])
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][1] = runtime.total_seconds() * 1000
+                dynamic_times[run][1] = runtime.total_seconds() * 1000
 
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_metric_map(num_rows, num_cols, 2)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, 0, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+                # plan Dijkstra's path
+                start_time = datetime.now()
+                dijkstra_path = graph.dijkstra(g, two_nodes[0], two_nodes[1])
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][2] = runtime.total_seconds() * 1000
+                dynamic_times[run][2] = runtime.total_seconds() * 1000
 
-    # Metric, small, dynamic
-    num_cols = 10
-    num_rows = 10
-    costs = []
-    runtimes = []
+                # plan A* path
+                start_time = datetime.now()
+                a_star_path = graph.a_star(g, two_nodes[0], two_nodes[1])
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][3] = runtime.total_seconds() * 1000
+                dynamic_times[run][3] = runtime.total_seconds() * 1000
 
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_metric_map(num_rows, num_cols, 2)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, .10, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+                # traverse breadth first search path
+                start_time = datetime.now()
+                static_costs[run][0] = traverse_path(bfs_path, original_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][0] += runtime.total_seconds() * 1000
 
-    # Metric, big, static
-    num_cols = 20
-    num_rows = 20
-    costs = []
-    runtimes = []
+                # traverse depth first search path
+                start_time = datetime.now()
+                static_costs[run][1] = traverse_path(dfs_path, original_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][1] += runtime.total_seconds() * 1000
 
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_metric_map(num_rows, num_cols, 2)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, 0, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+                # traverse Dijkstra's path
+                start_time = datetime.now()
+                static_costs[run][2] = traverse_path(dijkstra_path, original_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][2] += runtime.total_seconds() * 1000
 
-    # Metric, big, dynamic
-    num_cols = 20
-    num_rows = 20
-    costs = []
-    runtimes = []
+                # traverse A* path
+                start_time = datetime.now()
+                static_costs[run][3] = traverse_path(a_star_path, original_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][3] += runtime.total_seconds() * 1000
 
-    for _ in range(num_runs):
-        g = graph.Graph()
-        g.random_metric_map(num_rows, num_cols, 10)
-        two_nodes = random.sample(g.get_nodes(), 2)
-        robot = Robot(g, two_nodes[0], two_nodes[1])
-        c, r = robot.robot_go(algorithm, .10, 100)
-        costs.append(c)
-        runtimes.append(r)
-    avg_costs.append(sum(costs)/num_runs)
-    avg_runtimes.append(sum(runtimes)/num_runs)
+                # traverse D* path
+                start_time = datetime.now()
+                d_star_path = graph.d_star(g, two_nodes[0], two_nodes[1], original_costs, original_costs)
+                static_costs[run][4] = traverse_path(d_star_path, original_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                static_times[run][4] = runtime.total_seconds() * 1000
 
-    return avg_costs, avg_runtimes
+                # update weight
+                g.update_random_weights(dynamic_proportion, max_weight_multiplier)
+                updated_costs = g.get_all_connections()
+
+                # traverse breadth first search path
+                start_time = datetime.now()
+                dynamic_costs[run][0] = traverse_path(bfs_path, updated_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                dynamic_times[run][0] += runtime.total_seconds() * 1000
+
+                # traverse depth first search path
+                start_time = datetime.now()
+                dynamic_costs[run][1] = traverse_path(dfs_path, updated_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                dynamic_times[run][1] += runtime.total_seconds() * 1000
+
+                # traverse Dijkstra's path
+                start_time = datetime.now()
+                dynamic_costs[run][2] = traverse_path(dijkstra_path, updated_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                dynamic_times[run][2] += runtime.total_seconds() * 1000
+
+                # traverse A* path
+                start_time = datetime.now()
+                dynamic_costs[run][3] = traverse_path(a_star_path, updated_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                dynamic_times[run][3] += runtime.total_seconds() * 1000
+
+                # traverse D* path
+                start_time = datetime.now()
+                d_star_path = graph.d_star(g, two_nodes[0], two_nodes[1], original_costs, updated_costs)
+                dynamic_costs[run][4] = traverse_path(d_star_path, updated_costs)
+                end_time = datetime.now()
+                runtime = end_time - start_time
+                dynamic_times[run][4] = runtime.total_seconds() * 1000
+
+            # store average times and costs for experiment in dictionary
+            # keys are tuples of the representation, size, and dynamic proportion
+            avg_times[(rep, size, 0)] = np.average(static_times, axis=0)
+            avg_times[(rep, size, dynamic_proportion)] = np.average(dynamic_times, axis=0)
+            avg_costs[(rep, size, 0)] = np.average(static_costs, axis=0)
+            avg_costs[(rep, size, dynamic_proportion)] = np.average(dynamic_costs, axis=0)
+
+    return avg_times, avg_costs  # return average times and costs
 
 
 if __name__ == "__main__":
-    print("Breadth-first search experiments")
-    c, r = run_experiments(graph.breadth_first_search, 200)
-    print(c)
-    print(r)
-    
-    print("Dijkstra experiments")
-    c, r = run_experiments(graph.dijkstra, 200)
-    print(c)
-    print(r)
+    # information for map representations
+    topological_sizes = [25, 100]
+    metric_sizes = [10, 20]
+    max_weight_multiplier = 5
+    dynamic_proportion = 0.2
 
-    print("A* experiments")
-    c, r = run_experiments(graph.a_star, 200)
-    print(c)
-    print(r)
+    # run experiment using map representation information
+    num_runs = 100
+    avg_times, avg_costs = run_experiments(topological_sizes, metric_sizes, max_weight_multiplier, dynamic_proportion,
+                                           num_runs)
 
-    # TODO: D*
+    # print results of experiment
+    for rep in ['t', 'm']:
+        sizes = topological_sizes if rep == 't' else metric_sizes
+        for size in sizes:
+            rep_string = 'topological' if rep == 't' else 'metric'
+            print(f'For {rep_string} map of size {size} in static environment:')
+            print(f'Times: {avg_times[(rep, size, 0)]}')
+            print(f'Costs: {avg_costs[(rep, size, 0)]}')
+            print()
+            print(f'For {rep_string} map of size {size} in dynamic environment:')
+            print(f'Times: {avg_times[(rep, size, dynamic_proportion)]}')
+            print(f'Costs: {avg_costs[(rep, size, dynamic_proportion)]}')
+            print()
