@@ -2,13 +2,14 @@ from datetime import datetime
 import random
 import graph
 
+
 class Robot:
     def __init__(self, g, start_node, end_node):
         self.g = g
         self.current_path = []
         self.current_node = start_node
         self.destination_node = end_node
-        self.blocked_list = [] # maybe
+        self.blocked_list = []  # maybe
 
     def robot_go(self, algorithm, proportion_dynamic, max_weight):
         # Performance metrics
@@ -22,7 +23,7 @@ class Robot:
         self.g.update_random_weights(proportion_dynamic, max_weight)
 
         # Travel through the path
-        self.current_path.pop(0) # remove starting node
+        self.current_path.pop(0)  # remove starting node
         while self.current_node != self.destination_node:
             next_node = self.current_path[0]
             
@@ -32,19 +33,17 @@ class Robot:
 
         end_time = datetime.now()
         runtime = end_time - start_time
-        return cost_travelled, runtime.total_seconds() *1000
+        return cost_travelled, runtime.total_seconds() * 1000
 
 
-def run_experiments(algorithm, num_runs = 100):
+def run_experiments(algorithm, num_runs=100):
     avg_costs = []
     avg_runtimes = []
-    
 
     # Topological, small, static
     size = 25
     costs = []
     runtimes = []
-
     
     for _ in range(num_runs):
         g = graph.Graph()
@@ -61,7 +60,6 @@ def run_experiments(algorithm, num_runs = 100):
     size = 25
     costs = []
     runtimes = []
-
     
     for _ in range(num_runs):
         g = graph.Graph()
@@ -79,7 +77,6 @@ def run_experiments(algorithm, num_runs = 100):
     costs = []
     runtimes = []
 
-    
     for _ in range(num_runs):
         g = graph.Graph()
         g.random_topological_map(size, size*2, 2, 10, 10)
@@ -96,7 +93,6 @@ def run_experiments(algorithm, num_runs = 100):
     costs = []
     runtimes = []
 
-    
     for _ in range(num_runs):
         g = graph.Graph()
         g.random_topological_map(size, size*2, 2, 10, 10)
@@ -108,14 +104,12 @@ def run_experiments(algorithm, num_runs = 100):
     avg_costs.append(sum(costs)/num_runs)
     avg_runtimes.append(sum(runtimes)/num_runs)
 
-
     # Metric, small, static
     num_cols = 10
     num_rows = 10
     costs = []
     runtimes = []
 
-    
     for _ in range(num_runs):
         g = graph.Graph()
         g.random_metric_map(num_rows, num_cols, 2)
@@ -133,7 +127,6 @@ def run_experiments(algorithm, num_runs = 100):
     costs = []
     runtimes = []
 
-    
     for _ in range(num_runs):
         g = graph.Graph()
         g.random_metric_map(num_rows, num_cols, 2)
@@ -151,7 +144,6 @@ def run_experiments(algorithm, num_runs = 100):
     costs = []
     runtimes = []
 
-    
     for _ in range(num_runs):
         g = graph.Graph()
         g.random_metric_map(num_rows, num_cols, 2)
@@ -169,7 +161,6 @@ def run_experiments(algorithm, num_runs = 100):
     costs = []
     runtimes = []
 
-    
     for _ in range(num_runs):
         g = graph.Graph()
         g.random_metric_map(num_rows, num_cols, 10)

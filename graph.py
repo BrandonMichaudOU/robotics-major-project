@@ -149,7 +149,7 @@ class Graph:
         max_weight = int(max_weight_multiplier * min_weight)
 
         # create 2d grid
-        grid = [[Node((0, 0)) for a in range(num_rows)] for b in range(num_cols)]
+        grid = [[Node((0, 0)) for _ in range(num_rows)] for _ in range(num_cols)]
 
         # add nodes for each cell in grid
         for i in range(num_rows):
